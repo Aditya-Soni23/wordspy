@@ -1,0 +1,22 @@
+{
+    "short_name": "WordSpy",
+    "name": "WordSpy | Diamond Edition",
+    "description": "A local multiplayer social deduction game of wits and spies.",
+    "icons": [
+      {
+        "src": "logo.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "Diamond_Comapny_Logo.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "start_url": "index.html",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#0b0f1a",
+    "background_color": "#0b0f1a"
+  }

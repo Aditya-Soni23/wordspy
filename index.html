@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordSpy | Diamond</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="Diamond_Comapny_Logo.png">
+    <style>
+        :root {
+            --bg: #0b0f1a;
+            --card-bg: #1e293b;
+            --accent: #0ea5e9;
+            --spy-red: #ff4d4d;
+            --text-main: #f1f5f9;
+            --text-dim: #64748b;
+            --glass: rgba(30, 41, 59, 0.7);
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0b0f1a 100%);
+            color: var(--text-main);
+            margin: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .screen { 
+            display: none; 
+            width: 90%; 
+            max-width: 420px; 
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 40px 20px; 
+            border-radius: 30px; 
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .active { display: block; animation: slideUp 0.4s ease-out; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 5px; color: white; text-shadow: 0 0 20px rgba(14, 165, 233, 0.3); }
+        .subtitle { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 30px; }
+
+        /* Modern Buttons */
+        .btn {
+            background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); 
+            padding: 16px 20px; margin: 10px 0; border-radius: 16px; cursor: pointer; font-weight: 600; width: 100%;
+            font-size: 1rem;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--accent); }
+        .btn-primary { background: var(--accent); color: #000; border: none; }
+        .btn-primary:hover { background: #38bdf8; transform: scale(1.02); }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+        .grid button { 
+            background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); 
+            padding: 15px 5px; border-radius: 12px; font-weight: 800; cursor: pointer;
+        }
+        .grid button:hover { border-color: var(--accent); background: #334155; }
+
+        /* Gameplay Info */
+        .mission-info {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.3); padding: 12px 20px; border-radius: 15px;
+            margin-bottom: 20px; border: 1px dashed rgba(255,255,255,0.1);
+        }
+        .info-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; display: block; }
+        .info-value { font-weight: 800; color: var(--text-main); font-size: 14px; }
+
+        /* The Dossier Card */
+        #card-container { width: 280px; height: 380px; margin: 0 auto; perspective: 1000px; }
+        .card-inner {
+            position: relative; width: 100%; height: 100%; text-align: center;
+            transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d;
+        }
+        .flipped { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 24px; border: 2px solid rgba(255,255,255,0.05);
+        }
+
+        .card-front { background: #1e293b; color: var(--accent); box-shadow: inset 0 0 50px rgba(0,0,0,0.5); }
+        .card-back { background: #ffffff; color: #0f172a; transform: rotateY(180deg); padding: 20px; }
+
+        .hide-img { width: 100px; opacity: 0.8; margin-bottom: 20px; }
+        .role-text { font-size: 36px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+        .spy-alert { color: var(--spy-red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+
+        #instruction { margin-top: 25px; font-size: 14px; color: var(--text-dim); letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-mode" class="screen active">
+        <h1>WORDSPY</h1>
+        <span><h3>Diamond</h3><img style="width: 50px; height: 50px;" src="Diamond_Comapny_Logo.png"></span>
+        <p class="subtitle">Local Multiplayer</p>
+        <button class="btn btn-primary" onclick="setMode('manual')">MANUAL MODE</button>
+        <button class="btn" onclick="setMode('auto')">AUTOMATIC MODE</button>
+    </div>
+
+    <div id="screen-players" class="screen">
+        <p class="subtitle">How many players?</p>
+        <div class="grid" id="player-grid"></div>
+    </div>
+
+    <div id="screen-spies" class="screen">
+        <p class="subtitle">How many spys?</p>
+        <div class="grid" id="spy-grid"></div>
+    </div>
+
+    <div id="screen-category" class="screen">
+        <p class="subtitle">CATEGORY DETAILS</p>
+        <h3>Show category during mission?</h3>
+        <button class="btn btn-primary" onclick="setCategoryReveal(true)">REVEAL CATEGORY</button>
+        <button class="btn" onclick="setCategoryReveal(false)">HIDDEN CATEGORY</button>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div class="mission-info">
+            <div style="text-align: left;">
+                <span class="info-label">Current Agent</span>
+                <span class="info-value" id="player-turn">PLAYER 1</span>
+            </div>
+            <div style="text-align: right;" id="category-box">
+                <span class="info-label">Mission Category</span>
+                <span class="info-value" id="category-display">TOP SECRET</span>
+            </div>
+        </div>
+
+        <div id="card-container" onclick="handleCardClick()">
+            <div class="card-inner" id="card-inner">
+                <div class="card-front">
+                    <img src="hide.png" alt="🕵️" class="hide-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/554/554857.png'">
+                    <p style="font-size: 12px; letter-spacing: 2px; font-weight: 700;">TAP TO SEE</p>
+                </div>
+                <div class="card-back">
+                    <span class="info-label" style="color: #64748b; margin-bottom: 10px;">YOUR ROLE</span>
+                    <div class="role-text" id="word-display">WORD</div>
+                </div>
+            </div>
+        </div>
+        <p id="instruction">Tap to see, then tap to hide</p>
+    </div>
+
+    <div id="screen-end" class="screen">
+        <h1>FIND OUT!</h1>
+        <p class="subtitle">The spys are among you</p>
+        <p style="margin: 30px 0; color: var(--text-dim);">All players have received their roles. Start the investigation now.</p>
+        <button class="btn btn-primary" onclick="restartGame()">NEW MISSION</button>
+    </div>
+
+    <script>
+        const gameData = {
+    "Gaming": ["Valorant", "Minecraft", "Fortnite", "Asphalt", "Roblox", "GTA V", "Among Us", "Pokemon Go", "Free Fire", "PUBG", "Blox Fruits", "Pac-Man", "Mario", "Crossy Roads", "Dr.Driving", "Call of Duty", "Candy Crush", "Talking Tom", "Rocket League", "Red Dead Redemption"],
+    "Cars": ["BMW", "Audi", "Tesla", "Ferrari", "Toyota", "Ford", "Lamborghini", "Porsche", "Mercedes", "Honda", "Nissan", "Chevrolet", "Hyundai", "Volkswagen", "Jeep", "Maruti Suzuki", "Bentley", "Bugatti", "Jaguar", "Lexus"],
+    "Animals": ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo", "Panda", "Dolphin", "Eagle", "Wolf", "Zebra", "Shark", "Gorilla", "Koala", "Octopus", "Camel", "Fox", "Owl", "Sloth", "Cheetah"],
+    "Food": ["Pizza", "Burger", "Sushi", "Pasta", "Taco", "Ice Cream", "Steak", "Waffle", "Ramen", "Pancake", "Burrito", "Lasagna", "Dim Sum", "Chocolate", "Donut", "Salad", "Sandwich", "Hotdog", "Kebab", "Omelette"],
+    "Landmarks": ["Eiffel Tower", "Great Wall", "Miami Beach", "Statue of Liberty", "Big Ben", "Taj Mahal", "Mount Everest", "Disney World", "Hollywood", "Times Square", "Pyramids", "Sahara", "Amazon", "Antarctica", "Hawaii", "Charminar", "Ramoji", "Burj Khalifa", "India Gate", "Red Fort"],
+    "Jobs": ["Astronaut", "Firefighter", "Surgeon", "Detective", "Pilot", "Chef", "Librarian", "Scientist", "Plumber", "Lawyer", "Artist", "Architect", "Farmer", "Teacher", "Journalist", "Athlete", "Barber", "Musician", "Electrician", "Soldier"],
+    "Heroes": ["Spider-Man", "Batman", "Iron Man", "Superman", "Thor", "Deadpool", "Hulk", "Joker", "Harry Potter", "Black Panther", "Sherlock", "Pikachu", "Mickey Mouse", "James Bond", "Elsa", "Thanos", "Naruto", "Flash", "Captain America", "Wolverine"],
+    "Tech": ["iPhone", "PlayStation", "Netflix", "Google", "ChatGPT", "Instagram", "Bitcoin", "Laptop", "Headphones", "Smartwatch", "Drone", "Tesla Bot", "Virtual Reality", "Microscope", "Telescope", "Satellite", "Robot", "Keyboard", "Bluetooth", "Wi-Fi"],
+    "Sports": ["Football", "Basketball", "Cricket", "Tennis", "Badminton", "Swimming", "Boxing", "Golf", "Baseball", "Volleyball", "Hockey", "Rugby", "Skiing", "Surfing", "Cycling", "Wrestling", "Archery", "Skating", "Fencing", "Karate"],
+    "Famous People": ["Einstein", "Elon Musk", "Ronaldo", "Messi", "Taylor Swift", "Bill Gates", "Michael Jackson", "Barack Obama", "Queen Elizabeth", "Shakespeare", "Da Vinci", "Jackie Chan", "Usain Bolt", "Stephen Hawking", "Hitler", "Zuckerberg", "Mukesh Ambani", "Mandela", "Marie Curie", "Lincoln"]
+};
+
+
+        let settings = { mode: '', players: 0, spies: 0, showCategory: false };
+        let currentGameState = { word: '', category: '', playerRoles: [], currentPlayer: 0, state: 'hidden' };
+        let usedWords = JSON.parse(localStorage.getItem('usedWords')) || [];
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function setMode(m) { settings.mode = m; setupPlayerGrid(); showScreen('screen-players'); }
+
+        function setupPlayerGrid() {
+            const grid = document.getElementById('player-grid');
+            grid.innerHTML = '';
+            for(let i=3; i<=20; i++) {
+                let btn = document.createElement('button');
+                btn.innerText = i + 'P';
+                btn.onclick = () => selectPlayers(i);
+                grid.appendChild(btn);
+            }
+        }
+
+        function selectPlayers(count) {
+            settings.players = count;
+            if(settings.mode === 'auto') {
+                settings.spies = Math.floor(Math.random() * count) + 1; // 1 to All
+                showScreen('screen-category');
+            } else {
+                setupSpyGrid(count);
+                showScreen('screen-spies');
+            }
+        }
+
+        function setupSpyGrid(count) {
+            const grid = document.getElementById('spy-grid');
+            grid.innerHTML = '';
+            const maxSpies = Math.floor(count / 2);
+            for(let i=1; i<=maxSpies; i++) {
+                let btn = document.createElement('button');
+                btn.innerText = i + 'S';
+                btn.onclick = () => { settings.spies = i; showScreen('screen-category'); };
+                grid.appendChild(btn);
+            }
+        }
+
+        function setCategoryReveal(bool) {
+            settings.showCategory = bool;
+            startGame();
+        }
+
+        function startGame() {
+            let allCategories = Object.keys(gameData);
+            let pickedCategory = allCategories[Math.floor(Math.random() * allCategories.length)];
+            let availableWords = gameData[pickedCategory].filter(w => !usedWords.includes(w));
+
+            if(availableWords.length === 0) { usedWords = []; availableWords = gameData[pickedCategory]; }
+
+            let pickedWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            usedWords.push(pickedWord);
+            localStorage.setItem('usedWords', JSON.stringify(usedWords));
+
+            currentGameState.word = pickedWord;
+            currentGameState.category = pickedCategory;
+            currentGameState.currentPlayer = 0;
+            currentGameState.state = 'hidden';
+
+            let roles = new Array(settings.players).fill('word');
+            let spyIndices = [];
+            while(spyIndices.length < settings.spies) {
+                let r = Math.floor(Math.random() * settings.players);
+                if(!spyIndices.includes(r)) spyIndices.push(r);
+            }
+            spyIndices.forEach(idx => roles[idx] = 'SPY');
+            currentGameState.playerRoles = roles;
+
+            updateGameUI();
+            showScreen('screen-game');
+        }
+
+        function updateGameUI() {
+            const display = document.getElementById('word-display');
+            const isSpy = currentGameState.playerRoles[currentGameState.currentPlayer] === 'SPY';
+            
+            document.getElementById('player-turn').innerText = `AGENT ${currentGameState.currentPlayer + 1}`;
+            document.getElementById('category-display').innerText = settings.showCategory ? currentGameState.category : "UNKNOWN";
+            
+            if(isSpy) {
+                display.innerText = "SPY";
+                display.classList.add('spy-alert');
+            } else {
+                display.innerText = currentGameState.word;
+                display.classList.remove('spy-alert');
+            }
+            
+            document.getElementById('card-inner').classList.remove('flipped');
+        }
+
+        function handleCardClick() {
+            const card = document.getElementById('card-inner');
+            if (currentGameState.state === 'hidden') {
+                card.classList.add('flipped');
+                currentGameState.state = 'shown';
+            } else {
+                card.classList.remove('flipped');
+                currentGameState.state = 'hidden';
+                setTimeout(() => {
+                    currentGameState.currentPlayer++;
+                    if(currentGameState.currentPlayer < settings.players) {
+                        updateGameUI();
+                    } else {
+                        showScreen('screen-end');
+                    }
+                }, 400); 
+            }
+        }
+
+        function restartGame() { showScreen('screen-mode'); }
+    </script>
+</body>
+</html>
